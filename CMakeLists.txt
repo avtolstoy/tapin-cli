@@ -45,7 +45,8 @@ if(TAPIN_SANITIZE)
 elseif(CMAKE_HOST_WIN32)
     set(CMAKE_EXE_LINKER_FLAGS_INIT "-static")
 elseif(CMAKE_HOST_APPLE)
-    set(CMAKE_EXE_LINKER_FLAGS_INIT "-static-libstdc++ -static-libgcc")
+    # Added to the targets below: Apple Clang checks the C compiler with these flags, and it rejects them.
+    set(CMAKE_EXE_LINKER_FLAGS_INIT "")
 else()
     list(JOIN TAPIN_LINUX_LINK_FLAGS " " CMAKE_EXE_LINKER_FLAGS_INIT)
 endif()
@@ -160,6 +161,9 @@ target_compile_options(
         $<$<BOOL:${TAPIN_SANITIZE}>:-fno-omit-frame-pointer>
 )
 target_link_options(tapin_flags INTERFACE $<$<BOOL:${TAPIN_SANITIZE}>:-fsanitize=address,undefined>)
+if(APPLE)
+    target_link_options(tapin_flags INTERFACE -static-libstdc++ -static-libgcc)
+endif()
 
 add_library(
     tapin_lib STATIC
