@@ -187,7 +187,7 @@ add_library(
 )
 add_dependencies(tapin_lib openssl_build)
 target_include_directories(tapin_lib PUBLIC src ${CMAKE_BINARY_DIR}/generated)
-target_include_directories(tapin_lib SYSTEM PUBLIC ${stdexec_SOURCE_DIR}/include ${asio_SOURCE_DIR}/asio/include ${OPENSSL_DIR}/include ${CMAKE_BINARY_DIR}/generated)
+target_include_directories(tapin_lib SYSTEM PUBLIC ${stdexec_SOURCE_DIR}/include ${asio_SOURCE_DIR}/include ${OPENSSL_DIR}/include ${CMAKE_BINARY_DIR}/generated)
 target_compile_definitions(tapin_lib PUBLIC ASIO_STANDALONE ASIO_NO_EXCEPTIONS ASIO_NO_DEPRECATED)
 target_link_libraries(tapin_lib PUBLIC llhttp_static pugixml::pugixml ${OPENSSL_DIR}/lib/libssl.a ${OPENSSL_DIR}/lib/libcrypto.a tapin_flags)
 

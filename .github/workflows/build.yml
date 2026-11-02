@@ -24,6 +24,9 @@ on:
 permissions:
   contents: read
 
+env:
+  PACKAGE_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || 'dev' }}
+
 jobs:
   format:
     runs-on: ubuntu-24.04
@@ -40,14 +43,17 @@ jobs:
         include:
           - os: ubuntu-24.04
             name: linux-x86_64
+            extension: tar.gz
             shell: micromamba-shell {0}
             configure: ""
           - os: windows-2025
             name: windows-x86_64
+            extension: zip
             shell: msys2 {0}
             configure: ""
           - os: macos-15
             name: macos-arm64
+            extension: tar.gz
             shell: bash
             configure: -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=g++-16
     runs-on: ${{ matrix.os }}
@@ -87,8 +93,7 @@ jobs:
 
       - name: package
         run: |
-          version="${GITHUB_REF_NAME//\//-}"
-          package="tapin-cli-${version}-${{ matrix.name }}"
+          package="tapin-cli-${PACKAGE_VERSION}-${{ matrix.name }}"
           mkdir -p "dist/${package}"
           if [ "$RUNNER_OS" = "Windows" ]; then binary=tapin-cli.exe; else binary=tapin-cli; fi
           cp "build/release/${binary}" "dist/${package}/"
@@ -99,10 +104,8 @@ jobs:
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: ${{ matrix.name }}
-          path: |
-            dist/*.zip
-            dist/*.tar.gz
+          path: dist/tapin-cli-${{ env.PACKAGE_VERSION }}-${{ matrix.name }}.${{ matrix.extension }}
+          archive: false
           if-no-files-found: error
 
   sanitize:
@@ -156,7 +159,7 @@ jobs:
 
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: linux-x86_64
+          name: tapin-cli-${{ env.PACKAGE_VERSION }}-linux-x86_64.tar.gz
 
       - name: unpack
         run: tar -xzf tapin-cli-*.tar.gz --strip-components=1
@@ -181,7 +184,7 @@ jobs:
 
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: windows-x86_64
+          name: tapin-cli-${{ env.PACKAGE_VERSION }}-windows-x86_64.zip
 
       - name: unpack
         run: 7z x tapin-cli-*.zip -ounpacked
@@ -201,7 +204,7 @@ jobs:
 
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: macos-arm64
+          name: tapin-cli-${{ env.PACKAGE_VERSION }}-macos-arm64.tar.gz
 
       - name: unpack
         run: tar -xzf tapin-cli-*.tar.gz --strip-components=1
