@@ -145,7 +145,7 @@ jobs:
             prepare: apt-get -qq update && apt-get -qq install -y ca-certificates
           - image: ubuntu:26.04
             prepare: apt-get -qq update && apt-get -qq install -y ca-certificates
-          - image: debian:11
+          - image: debian:12
             prepare: apt-get -qq update && apt-get -qq install -y ca-certificates
           - image: fedora:latest
             prepare: "true"
@@ -185,6 +185,7 @@ jobs:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: tapin-cli-${{ env.PACKAGE_VERSION }}-windows-x86_64.zip
+          skip-decompress: true
 
       - name: unpack
         run: 7z x tapin-cli-*.zip -ounpacked
@@ -228,6 +229,7 @@ jobs:
         with:
           path: dist
           merge-multiple: true
+          skip-decompress: true
 
       - name: checksums
         working-directory: dist
