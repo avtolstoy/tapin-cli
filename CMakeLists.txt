@@ -193,6 +193,10 @@ target_link_libraries(tapin_lib PUBLIC llhttp_static pugixml::pugixml ${OPENSSL_
 
 if(WIN32)
     target_compile_definitions(tapin_lib PUBLIC _WIN32_WINNT=0x0A00 WIN32_LEAN_AND_MEAN)
+    # MinGW keeps the std::print terminal helpers in libstdc++exp, not libstdc++.
+    if(MINGW)
+        target_link_libraries(tapin_lib PUBLIC stdc++exp)
+    endif()
     target_link_libraries(tapin_lib PUBLIC ws2_32 mswsock advapi32 crypt32 gdi32)
 elseif(APPLE)
     # kqueue doesn't work on serial ports.
