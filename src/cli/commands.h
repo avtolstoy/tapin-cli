@@ -168,7 +168,7 @@ struct DecryptArgs {
     std::optional<std::string> version;
 };
 
-class [[= meta::Program{"tapin-cli", VERSION, "CLI for the Tamron TAP-in Console.", "https://github.com/avtolstoy/tamron-tapin-cli"}]] Commands {
+class [[= meta::Program{"tapin-cli", VERSION, "CLI for the Tamron TAP-in Console.", "https://github.com/avtolstoy/tapin-cli"}]] Commands {
 public:
     explicit Commands(io::IoLoop& io, console::ConsoleOptions consoleOptions = {});
 

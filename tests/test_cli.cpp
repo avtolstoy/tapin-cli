@@ -49,7 +49,7 @@ TEST_CASE("--help lists every command and none of their options") {
         EXPECT(help.contains(command));
     }
     EXPECT(help.contains("--version"));
-    EXPECT(help.contains("https://github.com/avtolstoy/tamron-tapin-cli"));
+    EXPECT(help.contains("https://github.com/avtolstoy/tapin-cli"));
     EXPECT_FALSE(help.contains("--model"));
 }
 

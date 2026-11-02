@@ -1,4 +1,4 @@
-# tamron-tapin-cli
+# tapin-cli
 
 `tapin-cli` is a CLI for the Tamron TAP-in Console. It updates Tamron lenses, on any mount, without Tamron's TAP-in Utility.
 
@@ -8,7 +8,7 @@ It also has a fix for Tamron lenses that stopped working on older Canon bodies a
 
 ## Install
 
-Download a binary from the [releases](https://github.com/avtolstoy/tamron-tapin-cli/releases) page, unpack it and run it from a terminal. There is nothing to install.
+Download a binary from the [releases](https://github.com/avtolstoy/tapin-cli/releases) page, unpack it and run it from a terminal. There is nothing to install.
 
 | Platform | |
 |---|---|
