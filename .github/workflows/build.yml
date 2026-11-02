@@ -1,0 +1,236 @@
+# Copyright 2026 Andrey Tolstoy <avtolstoy@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: check
+        run: git ls-files '*.h' '*.cpp' '*.c' | xargs pipx run clang-format==23.1.3 --dry-run -Werror
+
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            name: linux-x86_64
+            shell: micromamba-shell {0}
+            configure: ""
+          - os: windows-2025
+            name: windows-x86_64
+            shell: msys2 {0}
+            configure: ""
+          - os: macos-15
+            name: macos-arm64
+            shell: bash
+            configure: -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=g++-16
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - if: runner.os == 'Linux'
+        uses: mamba-org/setup-micromamba@f457c30a868e4760d3a6fcea5f25dc655b8edf39 # v3.2.1
+        with:
+          environment-name: build
+          create-args: gcc=16.2 gxx=16.2 sysroot_linux-64=2.39 cmake ninja perl make
+          condarc: |
+            channels:
+              - conda-forge
+
+      - if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e # v2.33.0
+        with:
+          msystem: UCRT64
+          install: make perl zip
+          pacboy: gcc:p cmake:p ninja:p
+
+      - if: runner.os == 'macOS'
+        run: brew install gcc cmake ninja
+
+      - name: configure
+        run: cmake --preset release ${{ matrix.configure }}
+
+      - name: build
+        run: cmake --build --preset release
+
+      - name: test
+        run: ctest --preset release
+
+      - name: package
+        run: |
+          version="${GITHUB_REF_NAME//\//-}"
+          package="tapin-cli-${version}-${{ matrix.name }}"
+          mkdir -p "dist/${package}"
+          if [ "$RUNNER_OS" = "Windows" ]; then binary=tapin-cli.exe; else binary=tapin-cli; fi
+          cp "build/release/${binary}" "dist/${package}/"
+          strip "dist/${package}/${binary}"
+          cp LICENSE THIRD_PARTY_LICENSES.txt README.md "dist/${package}/"
+          cd dist
+          if [ "$RUNNER_OS" = "Windows" ]; then zip -r "${package}.zip" "${package}"; else tar -czf "${package}.tar.gz" "${package}"; fi
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ matrix.name }}
+          path: |
+            dist/*.zip
+            dist/*.tar.gz
+          if-no-files-found: error
+
+  sanitize:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: micromamba-shell {0}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: mamba-org/setup-micromamba@f457c30a868e4760d3a6fcea5f25dc655b8edf39 # v3.2.1
+        with:
+          environment-name: build
+          create-args: gcc=16.2 gxx=16.2 sysroot_linux-64=2.39 cmake ninja perl make
+          condarc: |
+            channels:
+              - conda-forge
+
+      - name: configure
+        run: cmake --preset debug
+
+      - name: build
+        run: cmake --build --preset debug
+
+      - name: test
+        run: ctest --preset debug
+
+  # The built binary on systems that have no toolchain. Run through docker: the actions need a newer libc than the
+  # oldest of these has, so a job container can't work.
+  smoke-linux:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: ubuntu:18.04
+            prepare: apt-get -qq update && apt-get -qq install -y ca-certificates
+          - image: ubuntu:26.04
+            prepare: apt-get -qq update && apt-get -qq install -y ca-certificates
+          - image: debian:11
+            prepare: apt-get -qq update && apt-get -qq install -y ca-certificates
+          - image: fedora:latest
+            prepare: "true"
+          - image: archlinux:latest
+            prepare: "true"
+          - image: alpine:latest
+            prepare: apk add -q ca-certificates
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: linux-x86_64
+
+      - name: unpack
+        run: tar -xzf tapin-cli-*.tar.gz --strip-components=1
+
+      - name: run
+        run: >-
+          docker run --rm -v "$PWD:/work" -w /work ${{ matrix.image }}
+          sh -c '${{ matrix.prepare }} && sh scripts/smoke_test.sh /work/tapin-cli'
+
+  smoke-windows:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, windows-2025]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: windows-x86_64
+
+      - name: unpack
+        run: 7z x tapin-cli-*.zip -ounpacked
+
+      - name: run
+        run: sh scripts/smoke_test.sh "$(echo "$PWD"/unpacked/*/tapin-cli.exe)"
+
+  smoke-macos:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, macos-26]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: macos-arm64
+
+      - name: unpack
+        run: tar -xzf tapin-cli-*.tar.gz --strip-components=1
+
+      - name: run
+        run: sh scripts/smoke_test.sh "$PWD/tapin-cli"
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [format, build, sanitize, smoke-linux, smoke-windows, smoke-macos]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: check the tag matches the project version
+        run: grep -q "project(tapin_cli VERSION ${GITHUB_REF_NAME#v} " CMakeLists.txt
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: checksums
+        working-directory: dist
+        run: sha256sum * > SHA256SUMS
+
+      - name: publish
+        run: gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --generate-notes --prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
