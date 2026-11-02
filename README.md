@@ -235,6 +235,24 @@ So every id up to `0x82` gets the 8 byte path that already exists in the firmwar
 | F013 | `a9ee5fe339819d7076ec2c08dafe16fa07b8d912445cb1a882a48228bcf453ba` |
 | F016 | `8fc699853db6e8171f813bc061036ac4415b684d96a2ed651592e393e1d7a039` |
 
+### Limits
+
+This is a workaround, not the protocol fix. Canon picks the reply length from
+the number of parameter bytes the body sends. Samyang's EF firmware defaults to
+the short reply and only uses the longer one for a known list of bodies. Tamron
+does the opposite: long by default, short for one id. The patch widens that one
+comparison. The underlying model is still a guess.
+
+The concrete risk: every id at or below `0x82` now takes the 8 byte path.
+The ids in the captures are `0x00` and `0x03` for the short form and `0x97`
+and up for the long form. Ids `0x04` to `0x81` are unobserved. If one of those
+is a body that expects the 12 byte reply, this image breaks it. Bodies above
+`0x82` are byte-for-byte stock, so they are not affected.
+
+Smallest patch that works: four branch opcodes, one per check, so ids at or
+below `0x82` take the 8 byte path that is already there. The payload CRC is
+recomputed. Nothing else changes.
+
 No firmware is stored in this repository.
 
 ## Things to know
