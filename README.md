@@ -1,10 +1,12 @@
 # tapin-cli
 
-`tapin-cli` is a CLI for the Tamron TAP-in Console. It updates Tamron lenses, on any mount, without Tamron's TAP-in Utility.
+`tapin-cli` is an open-source CLI for the Tamron TAP-in Console. It updates Tamron lens firmware, on any mount, without Tamron's TAP-in Utility.
 
-It also has a fix for Tamron lenses that either stopped working on older Canon bodies after a firmware update or never worked on them at all. The tested ones are the SP 35/45/85mm f/1.8 VC on the EOS 3; other Canon EF lenses with the same four checks can be patched with `--experimental`, but nobody has flashed those.
+It also has a firmware patch for **Tamron aperture and compatibility problems with older Canon EOS film SLR cameras**. Some lenses stopped working on these cameras after a firmware update, while others never worked on them at all.
 
-**This is my own tool. It is not from Tamron and not supported by Tamron. Flashing firmware can go wrong, a lens that doesn't come back needs Tamron service, and it may void your warranty. Use it at your own risk.**
+The fix has been tested on the **Tamron SP 35mm, 45mm and 85mm f/1.8 VC lenses with the Canon EOS 3**. Compatibility with other Canon EOS film bodies is not confirmed. Other Tamron lenses with a Canon EF mount that pass the same four checks can be patched using `--experimental`, but none of those have been flashed yet.
+
+**This is my own tool. It is not from Tamron and is not supported by Tamron. Flashing firmware can go wrong, a lens that doesn't come back needs Tamron service, and it may void your warranty. Use it at your own risk.**
 
 ## Install
 
