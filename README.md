@@ -4,7 +4,30 @@
 
 It also has a firmware patch for **Tamron aperture and compatibility problems with older Canon EOS film SLR cameras**. Some lenses stopped working on these cameras after a firmware update, while others never worked on them at all.
 
-The fix has been tested on the **Tamron SP 35mm, 45mm and 85mm f/1.8 VC lenses with the Canon EOS 3**. Compatibility with other Canon EOS film bodies is not confirmed. Other Tamron lenses with a Canon EF mount that pass the same four checks can be patched using `--experimental`, but none of those have been flashed yet.
+## Supported Tamron lenses
+
+These Tamron lenses with a Canon EF mount can take the fix:
+
+| Lens | Model | Status |
+|---|---|---|
+| SP 35mm F/1.8 Di VC USD | F012 | ✅ Tested (EOS 3, EOS 30V) |
+| SP 45mm F/1.8 Di VC USD | F013 | ✅ Tested (EOS 3, EOS 30V) |
+| SP 85mm F/1.8 Di VC USD | F016 | ✅ Tested (EOS 3, EOS 30V) |
+| SP 150-600mm F/5-6.3 Di VC USD G2 | A022 | Needs `--experimental` |
+| SP 70-200mm F/2.8 Di VC USD G2 | A025 | Needs `--experimental` |
+| SP 24-70mm F/2.8 Di VC USD G2 | A032 | Needs `--experimental` |
+| 70-210mm F/4 Di VC USD | A034 | Needs `--experimental` |
+| 100-400mm F/4.5-6.3 Di VC USD | A035 | Needs `--experimental` |
+| 17-35mm F/2.8-4 Di OSD | A037 | Needs `--experimental` |
+| SP 15-30mm F/2.8 Di VC USD G2 | A041 | Needs `--experimental` |
+| 35-150mm F/2.8-4 Di VC OSD | A043 | Needs `--experimental` |
+| 10-24mm F/3.5-4.5 Di II VC HLD | B023 | Needs `--experimental` |
+| 18-400mm F/3.5-6.3 Di II VC HLD | B028 | Needs `--experimental` |
+| SP 35mm F/1.4 Di USD | F045 | Needs `--experimental` |
+
+`fix --experimental` patches the current Tamron image of the other lenses, but nobody has flashed those on a real lens. A newer Tamron image of the tested lenses also needs `--experimental`. `fix` refuses an image without exactly 4 checks; F017 (SP 90mm F/2.8 Di MACRO 1:1 VC USD) has no check, so there is nothing to patch.
+
+Compatibility with other Canon EOS film bodies is not confirmed.
 
 **This is my own tool. It is not from Tamron and is not supported by Tamron. Flashing firmware can go wrong, a lens that doesn't come back needs Tamron service, and it may void your warranty. Use it at your own risk.**
 
@@ -89,7 +112,7 @@ Flash patched firmware so older Canon bodies can drive the lens. Canon EF only.
 tapin-cli fix [--model <model>] [--experimental] [--port <port>] [--yes] [--recovery] [--reset] [--debug]
 ```
 
-`--experimental` allows an image nobody has tested on a camera. See [What has been tested](#what-has-been-tested).
+`--experimental` allows an image nobody has tested on a camera. See [Supported Tamron lenses](#supported-tamron-lenses) and [Test details](#test-details).
 
 ### info
 
@@ -176,20 +199,13 @@ tapin-cli update --yes --port /dev/ttyACM0
 
 Errors go to stderr.
 
-## What has been tested
+## Test details
 
 | Lens | Model | Image | Stock sha256 | EOS 3 | EOS 30V |
 |---|---|---|---|---|---|
 | SP 35mm F/1.8 Di VC USD | F012 | 0400 | `e8f78c88...` | works | works |
 | SP 45mm F/1.8 Di VC USD | F013 | 0400 | `ff46a40b...` | works | works |
 | SP 85mm F/1.8 Di VC USD | F016 | 0500 | `602c94fa...` | works | works |
-
-Anything else needs `--experimental`:
-
-- Other Canon EF lenses with the same check: A022, A025, A032, A034, A035, A037, A041, B023, B028 and F045. The patch applies, but nobody has flashed these.
-- A newer Tamron image of the lenses above.
-
-`fix` refuses an image without exactly 4 checks. F017 doesn't have the check at all, so there is nothing to patch.
 
 Not tested at all:
 
